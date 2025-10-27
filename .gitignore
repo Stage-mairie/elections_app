@@ -20,3 +20,9 @@ local.properties
 # Gradle
 .gradle/
 build/
+
+app/build.gradle.kts
+app/src/main/res/values/colors.xml
+build.gradle.kts
+gradle.properties
+settings.gradle.kts
