@@ -13,3 +13,10 @@
 .externalNativeBuild
 .cxx
 local.properties
+.idea/
+/scripts/electeurs.xlsx
+/app/src/main/assets/electeurs.json
+
+# Gradle
+.gradle/
+build/
