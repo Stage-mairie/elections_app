@@ -1,5 +1,6 @@
 package com.example.bureaudevotemsa
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -13,38 +14,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.bureaudevotemsa.ui.theme.BureauDeVoteMSATheme
 import com.example.bureaudevotemsa.ui.theme.components.BackgroundGradient
+import com.example.bureaudevotemsa.ui.theme.components.UserForm
 
 class MainActivity : ComponentActivity() {
+    @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             BureauDeVoteMSATheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    BackgroundGradient {
-                        Greeting(
-                            name = "Android",
-                            modifier = Modifier.padding(innerPadding)
-                        )
+                Scaffold(
+                    modifier = Modifier.fillMaxSize(),
+                    content = {
+                        BackgroundGradient {
+                            UserForm()
+                        }
                     }
-                }
+                )
             }
         }
     }
 }
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    BureauDeVoteMSATheme {
-        Greeting("Android")
-    }
-}
