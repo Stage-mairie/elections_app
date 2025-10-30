@@ -18,6 +18,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.bureaudevotemsa.ui.theme.BureauDeVoteMSATheme
 import com.example.bureaudevotemsa.ui.theme.components.BackgroundGradient
+import com.example.bureaudevotemsa.ui.theme.components.BackgroundGradient
 import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
