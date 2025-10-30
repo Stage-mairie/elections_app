@@ -151,7 +151,7 @@ fun ElecteurCard(e: Electeurs) {
             Text("Prénoms : ${e.prenoms}",
                 style = MaterialTheme.typography.bodyMedium
             )
-            Text("Date de naissance : ${e.dateDeNaissance ?: "01/01/1900"}",
+            Text("Date de naissance : ${e.dateDeNaissance ?: "-"}",
                 style = MaterialTheme.typography.bodyMedium
             )
             Text("Code du bureau : ${e.codeBureauVote}",
