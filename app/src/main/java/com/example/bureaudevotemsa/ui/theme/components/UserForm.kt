@@ -16,7 +16,9 @@ import androidx.compose.ui.unit.dp
 import java.util.*
 
 @Composable
-fun UserForm() {
+fun UserForm(
+    onSearchClicked: (nom: String, prenom: String, dateNaissance: String) -> Unit
+) {
     var nom by remember { mutableStateOf("") }
     var prenom by remember { mutableStateOf("") }
     var dateNaissance by remember { mutableStateOf("") }
@@ -91,7 +93,8 @@ fun UserForm() {
                             DatePickerDialog(
                                 context,
                                 { _, year, month, day ->
-                                    dateNaissance = String.format("%02d/%02d/%d", day, month + 1, year)
+                                    dateNaissance =
+                                        String.format("%02d/%02d/%d", day, month + 1, year)
                                 },
                                 annee,
                                 mois,
@@ -104,7 +107,9 @@ fun UserForm() {
 
             // Search button
             Button(
-                onClick = { },
+                onClick = {
+                    onSearchClicked(nom, prenom, dateNaissance)
+                },
                 modifier = Modifier
                     .fillMaxWidth(0.3f)
                     .padding(top = 8.dp)

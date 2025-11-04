@@ -1,6 +1,7 @@
 package com.example.bureaudevotemsa
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -27,7 +28,14 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     content = {
                         BackgroundGradient {
-                            UserForm()
+                            UserForm { nom, prenom, dateNaissance ->
+                                val intent = Intent(this, ResultsActivity::class.java)
+                                intent.putExtra("EXTRA_NOM", nom)
+                                intent.putExtra("EXTRA_PRENOM", prenom)
+                                intent.putExtra("EXTRA_DATE_NAISSANCE", dateNaissance)
+                                startActivity(intent)
+
+                            }
                         }
                     }
                 )

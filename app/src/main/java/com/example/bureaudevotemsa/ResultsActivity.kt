@@ -23,6 +23,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import android.content.Context
+import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.runtime.produceState
 import androidx.compose.foundation.background
@@ -34,6 +35,14 @@ import androidx.compose.ui.text.font.FontWeight
 class ResultsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Récupération des données
+        val nom = intent.getStringExtra("EXTRA_NOM")
+        val prenom = intent.getStringExtra("EXTRA_PRENOM")
+        val dateNaissance = intent.getStringExtra("EXTRA_DATE_NAISSANCE")
+
+        // Test Recupération de données
+        Log.d("Recup", "Nom: $nom, Prénom: $prenom, Date: $dateNaissance")
         setContent {
             SecondScreen()
         }
