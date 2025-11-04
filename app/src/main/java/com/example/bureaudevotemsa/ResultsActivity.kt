@@ -91,28 +91,34 @@ fun searchElecteur(
     prenom: String?,
     dateNaissance: String?
 ): List<Electeurs> {
-    if (nom.isNullOrBlank() || prenom.isNullOrBlank() || dateNaissance.isNullOrBlank()) {
-        Log.d("Search", "Champs vides : nom=$nom, prenom=$prenom, date=$dateNaissance")
+    // Si tous les champs sont vides, on renvoie rien
+    if (nom.isNullOrBlank() && prenom.isNullOrBlank() && dateNaissance.isNullOrBlank()) {
+        Log.d("Search", "Tous les champs sont vides")
         return emptyList()
     }
 
-    val result = electeurs.filter { e ->
-        val matchNom = e.nomDeNaissance.equals(nom, ignoreCase = true)
-        val matchPrenom = e.prenoms?.contains(prenom, ignoreCase = true) ?: false
-        val matchDate = e.dateDeNaissance?.replace("\\", "/")
-            ?.equals(dateNaissance.replace("\\", "/"), ignoreCase = true) ?: false
+    return electeurs.filter { e ->
+        val matchNom = if (!nom.isNullOrBlank()) {
+            e.nomDeNaissance.equals(nom, ignoreCase = true) ||
+                    (e.nomUsage?.equals(nom, ignoreCase = true) ?: false)
+        } else true
 
-        Log.d(
-            "Search",
-            "Test: ${e.nomDeNaissance} ${e.prenoms} ${e.dateDeNaissance} → nom=$matchNom prenom=$matchPrenom date=$matchDate"
-        )
+        val matchPrenom = if (!prenom.isNullOrBlank()) {
+            e.prenoms?.contains(prenom, ignoreCase = true) ?: false
+        } else true
+
+        val matchDate = if (!dateNaissance.isNullOrBlank()) {
+            e.dateDeNaissance?.replace("\\", "/")
+                ?.equals(dateNaissance.replace("\\", "/"), ignoreCase = true) ?: false
+        } else true
+
+        Log.d("Search", "Test: ${e.nomDeNaissance} / ${e.nomUsage} / ${e.prenoms} ${e.dateDeNaissance} → " +
+                "nom=$matchNom prenom=$matchPrenom date=$matchDate")
 
         matchNom && matchPrenom && matchDate
     }
-
-    Log.d("Search", "Résultats trouvés: ${result.size}")
-    return result
 }
+
 
 
 @OptIn(ExperimentalMaterial3Api::class)
