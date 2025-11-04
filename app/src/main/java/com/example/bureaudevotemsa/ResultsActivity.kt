@@ -31,7 +31,6 @@ import androidx.compose.foundation.border
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.text.font.FontWeight
 
-
 class ResultsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,7 +55,7 @@ data class Electeurs(
     @SerialName("nom d'usage")
     val nomUsage: String? = null,
     @SerialName("prénoms")
-    val prenoms: String,
+    val prenoms: String? = null,
     @SerialName("date de naissance")
     val dateDeNaissance: String? = null,
     @SerialName("code du bureau de vote")
@@ -71,20 +70,61 @@ fun chargerElecteurs(context: Context): List<Electeurs> {
             .bufferedReader()
             .use { it.readText() }
 
-        val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
-        val list = json.decodeFromString<List<Electeurs>>(jsonString)
-        list
+        val json = Json {
+            ignoreUnknownKeys = true
+            coerceInputValues = true
+            isLenient = true
+        }
+
+        json.decodeFromString<List<Electeurs>>(jsonString)
     } catch (e: Exception) {
+        Log.e("JSON", "Erreur de chargement JSON : ${e.message}")
         e.printStackTrace()
         emptyList()
     }
 }
+
+
+fun searchElecteur(
+    electeurs: List<Electeurs>,
+    nom: String?,
+    prenom: String?,
+    dateNaissance: String?
+): List<Electeurs> {
+    if (nom.isNullOrBlank() || prenom.isNullOrBlank() || dateNaissance.isNullOrBlank()) {
+        Log.d("Search", "Champs vides : nom=$nom, prenom=$prenom, date=$dateNaissance")
+        return emptyList()
+    }
+
+    val result = electeurs.filter { e ->
+        val matchNom = e.nomDeNaissance.equals(nom, ignoreCase = true)
+        val matchPrenom = e.prenoms?.contains(prenom, ignoreCase = true) ?: false
+        val matchDate = e.dateDeNaissance?.replace("\\", "/")
+            ?.equals(dateNaissance.replace("\\", "/"), ignoreCase = true) ?: false
+
+        Log.d(
+            "Search",
+            "Test: ${e.nomDeNaissance} ${e.prenoms} ${e.dateDeNaissance} → nom=$matchNom prenom=$matchPrenom date=$matchDate"
+        )
+
+        matchNom && matchPrenom && matchDate
+    }
+
+    Log.d("Search", "Résultats trouvés: ${result.size}")
+    return result
+}
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SecondScreen() {
     val context = LocalContext.current
     val activity = context as ComponentActivity
+
+    // Récupération des infos passées depuis l'intent
+    val nom = activity.intent.getStringExtra("EXTRA_NOM")
+    val prenom = activity.intent.getStringExtra("EXTRA_PRENOM")
+    val dateNaissance = activity.intent.getStringExtra("EXTRA_DATE_NAISSANCE")
 
     val electeurs by produceState<List<Electeurs>?>(initialValue = null, key1 = Unit) {
         value = withContext(Dispatchers.IO) { chargerElecteurs(context) }
@@ -108,30 +148,48 @@ fun SecondScreen() {
         },
         containerColor = Color.White
     ) { paddingValues ->
-        if (electeurs == null) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(color = Color(0xFF35A5C0))
+        when {
+            electeurs == null -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = Color(0xFF35A5C0))
+                }
             }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                contentPadding = PaddingValues(16.dp)
-            ) {
-                items(electeurs!!) { e ->
-                    ElecteurCard(e)
+
+            else -> {
+                val resultats = searchElecteur(electeurs!!, nom, prenom, dateNaissance)
+
+                if (resultats.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(paddingValues),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("Aucun électeur trouvé.", color = Color.Gray)
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(paddingValues),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        contentPadding = PaddingValues(16.dp)
+                    ) {
+                        items(resultats) { e ->
+                            ElecteurCard(e)
+                        }
+                    }
                 }
             }
         }
     }
 }
+
 
 @Composable
 fun ElecteurCard(e: Electeurs) {

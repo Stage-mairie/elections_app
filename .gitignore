@@ -16,7 +16,6 @@ local.properties
 .idea/
 /scripts/electeurs.xlsx
 /app/src/main/assets/electeurs.json
-/app/src/main/assets/electeurs1.json
 
 # Gradle
 .gradle/
