@@ -29,6 +29,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.runtime.produceState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.remember
 import androidx.compose.ui.draw.shadow
@@ -191,8 +192,8 @@ fun SecondScreen() {
                         verticalArrangement = Arrangement.spacedBy(16.dp),
                         contentPadding = PaddingValues(16.dp)
                     ) {
-                        items(resultats) { e ->
-                            ElecteurCard(e)
+                        itemsIndexed(resultats) { index, e ->
+                            ElecteurCard(e, index)
                         }
                     }
                 }
@@ -202,7 +203,7 @@ fun SecondScreen() {
 }
 
 @Composable
-fun ElecteurCard(e: Electeurs) {
+fun ElecteurCard(e: Electeurs, index: Int) {
     val colors = listOf(
         Color(0xFFE53935),
         Color(0xFFD81B60),
@@ -221,13 +222,15 @@ fun ElecteurCard(e: Electeurs) {
 
     val chipColor = remember { colors.random() }
 
+    val backgroundColor = if (index % 2 == 0) Color(231, 235, 224) else Color.White
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .shadow(4.dp, RoundedCornerShape(16.dp)),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White,
+            containerColor = backgroundColor,
             contentColor = Color.Black
         ),
         elevation = CardDefaults.cardElevation(4.dp),
@@ -290,4 +293,5 @@ fun ElecteurCard(e: Electeurs) {
         }
     }
 }
+
 
