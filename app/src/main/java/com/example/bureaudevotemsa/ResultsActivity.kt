@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
+import androidx.compose.material3.Text
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -28,8 +29,11 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.runtime.produceState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.runtime.remember
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 
 class ResultsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -84,14 +88,12 @@ fun chargerElecteurs(context: Context): List<Electeurs> {
     }
 }
 
-
 fun searchElecteur(
     electeurs: List<Electeurs>,
     nom: String?,
     prenom: String?,
     dateNaissance: String?
 ): List<Electeurs> {
-    // Si tous les champs sont vides, on renvoie rien
     if (nom.isNullOrBlank() && prenom.isNullOrBlank() && dateNaissance.isNullOrBlank()) {
         Log.d("Search", "Tous les champs sont vides")
         return emptyList()
@@ -119,8 +121,6 @@ fun searchElecteur(
     }
 }
 
-
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SecondScreen() {
@@ -144,6 +144,11 @@ fun SecondScreen() {
                 navigationIcon = {
                     IconButton(onClick = { activity.finish() }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Retour")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { activity.finish() }) {
+                        Icon(Icons.Default.Close, contentDescription = "Fermer")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -196,9 +201,26 @@ fun SecondScreen() {
     }
 }
 
-
 @Composable
 fun ElecteurCard(e: Electeurs) {
+    val colors = listOf(
+        Color(0xFFE53935),
+        Color(0xFFD81B60),
+        Color(0xFF8E24AA),
+        Color(0xFF5E35B1),
+        Color(0xFF3949AB),
+        Color(0xFF1E88E5),
+        Color(0xFF00897B),
+        Color(0xFF43A047),
+        Color(0xFFF4511E),
+        Color(0xFFFB8C00),
+        Color(0xFFFDD835),
+        Color(0xFF00ACC1),
+        Color(0xFF7CB342)
+    )
+
+    val chipColor = remember { colors.random() }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -211,39 +233,61 @@ fun ElecteurCard(e: Electeurs) {
         elevation = CardDefaults.cardElevation(4.dp),
         border = BorderStroke(1.dp, Color.Black)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = e.nomDeNaissance,
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.Start
+            ) {
+                Text(
+                    text = e.nomDeNaissance,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold
+                    )
                 )
-            )
-            Text("Nom d'usage : ${e.nomUsage ?: "-"}",
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Text("Prénoms : ${e.prenoms}",
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Text("Date de naissance : ${e.dateDeNaissance ?: "-"}",
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Text("Code du bureau : ${e.codeBureauVote}",
-                style = MaterialTheme.typography.bodyMedium
-            )
+                Text("Nom d'usage : ${e.nomUsage ?: "-"}")
+                Text("Prénoms : ${e.prenoms}")
+                Text("Date de naissance : ${e.dateDeNaissance ?: "-"}")
 
-            Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Box(
+                    modifier = Modifier
+                        .background(chipColor, RoundedCornerShape(12.dp))
+                        .border(1.dp, Color.Black, RoundedCornerShape(12.dp))
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = e.libelleBureauVote,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Color.White
+                    )
+                }
+            }
 
             Box(
                 modifier = Modifier
-                    .background(Color.White, RoundedCornerShape(12.dp))
-                    .border(1.dp, Color.Black, RoundedCornerShape(12.dp))
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                    .padding(start = 12.dp)
+                    .border(2.dp, Color.Black, RoundedCornerShape(8.dp))
+                    .size(64.dp),
+                contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = e.libelleBureauVote,
-                    style = MaterialTheme.typography.labelMedium
+                    text = e.codeBureauVote.toString(),
+                    color = Color.Black,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    ),
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         }
     }
 }
+
