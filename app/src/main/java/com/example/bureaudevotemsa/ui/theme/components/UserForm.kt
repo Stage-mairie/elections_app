@@ -1,5 +1,6 @@
 package com.example.bureaudevotemsa.ui.theme.components
 
+import android.R.attr.title
 import android.app.DatePickerDialog
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.clickable
@@ -7,8 +8,10 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.ui.Alignment
@@ -27,6 +30,8 @@ fun UserForm(
     var nom by remember { mutableStateOf("") }
     var prenom by remember { mutableStateOf("") }
     var dateNaissance by remember { mutableStateOf("") }
+
+    var showHint by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
 
@@ -149,8 +154,36 @@ fun UserForm(
                 )
                 Text("Réinitialiser")
             }
+
+        }
+
+        IconButton(
+            onClick = { showHint = true },
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(16.dp)
+                .size(36.dp)
+        ) {
+            Icon(Icons.Filled.Info, contentDescription = "Hint")
+        }
+
+        if (showHint) {
+            AlertDialog(
+                onDismissRequest = { showHint = false },
+                title = { Text("Information - Date de naissance") },
+                text = { Text(
+                    "Si la date n'est pas précise, utilisez le 01/01/XXXX, où XXXX est l'année de naissance."
+                )  },
+                confirmButton = {
+                    TextButton(onClick = { showHint = false }) {
+                        Text("OK")
+                    }
+                }
+
+            )
         }
     }
+
 }
 
 @Preview(showBackground = true)
