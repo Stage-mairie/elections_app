@@ -30,6 +30,9 @@ fun UserForm(
 
     val context = LocalContext.current
 
+    // Vrai si au moins un des 3 champs est non vide, faux sinon
+    val isSearchEnabled = nom.isNotBlank() || prenom.isNotBlank() || dateNaissance.isNotBlank()
+
     Box(
         modifier = Modifier
             .fillMaxSize(),
@@ -115,6 +118,7 @@ fun UserForm(
                 onClick = {
                     onSearchClicked(nom, prenom, dateNaissance)
                 },
+                enabled = isSearchEnabled,
                 modifier = Modifier
                     .fillMaxWidth(0.3f)
                     .padding(top = 8.dp)
