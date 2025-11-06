@@ -49,6 +49,16 @@ fun UserForm(
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+
+            // Titre de l'application
+            Text(
+                text = "Bureau de Vote MSA",      // ton titre
+                style = MaterialTheme.typography.headlineMedium, // ou headlineSmall, titleLarge...
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+
+
             // Champ Nom
             OutlinedTextField(
                 value = nom,
