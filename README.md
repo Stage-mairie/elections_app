@@ -29,8 +29,8 @@ L’utilisateur remplit un formulaire simple et voit directement son bureau.
 
 ## Mise à jour
 1. Mettre à jour le fichier Excel maître
-2. Générer un nouveau JSON avec le script
-3. Remplacer le JSON dans l’application
+2. Générer un nouveau JSON avec le script (faire 'python create_json.py' dans le dossier scripts/) 
+3. Remplacer le JSON dans l’application (dans le dossier assets/)
 
 ## Contexte
 Projet de la ville de Saint-André pour faciliter l’accès aux bureaux de vote sur tablette pour les citoyens.
