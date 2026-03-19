@@ -35,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import java.text.Normalizer
 
 @Serializable
 data class Electeurs(
@@ -71,16 +72,24 @@ fun chargerElecteurs(context: Context): List<Electeurs> {
     }
 }
 
+fun String.normaliser(): String {
+    return Normalizer
+        .normalize(this, Normalizer.Form.NFD)
+        .replace(Regex("\\p{Mn}"), "")
+        .trim()
+        .lowercase()
+}
+
 class ElecteurSearchIndex(electeurs: List<Electeurs>) {
 
     // Index par nom (nom de naissance + nom d'usage)
     private val parNom: Map<String, List<Electeurs>> = buildMap {
         electeurs.forEach { e ->
-            val cle1 = e.nomDeNaissance.trim().lowercase()
+            val cle1 = e.nomDeNaissance.normaliser()
             getOrPut(cle1) { mutableListOf() }.also {
                 (it as MutableList).add(e)
             }
-            val cle2 = e.nomUsage?.trim()?.lowercase()
+            val cle2 = e.nomUsage?.normaliser()
             if (cle2 != null && cle2 != cle1) {
                 getOrPut(cle2) { mutableListOf() }.also {
                     (it as MutableList).add(e)
@@ -103,8 +112,8 @@ class ElecteurSearchIndex(electeurs: List<Electeurs>) {
     ): List<Electeurs> {
 
         // Normaliser une seule fois
-        val nomN    = nom?.trim()?.lowercase()?.takeIf { it.isNotBlank() }
-        val prenomN = prenom?.trim()?.lowercase()?.takeIf { it.isNotBlank() }
+        val nomN    = nom?.normaliser()?.takeIf { it.isNotBlank() }
+        val prenomN = prenom?.normaliser()?.takeIf { it.isNotBlank() }
         val dateN   = dateNaissance?.replace("\\", "/")?.trim()?.takeIf { it.isNotBlank() }
 
         if (nomN == null && prenomN == null && dateN == null) return emptyList()
@@ -121,11 +130,11 @@ class ElecteurSearchIndex(electeurs: List<Electeurs>) {
         // Filtrer les candidats avec les critères restants
         return candidates.filter { e ->
             (nomN == null
-                    || e.nomDeNaissance.trim().lowercase() == nomN
-                    || e.nomUsage?.trim()?.lowercase() == nomN)
+                    || e.nomDeNaissance.normaliser() == nomN
+                    || e.nomUsage?.normaliser() == nomN)
                     &&
                     (prenomN == null
-                            || e.prenoms?.lowercase()?.contains(prenomN) == true)
+                            || e.prenoms?.normaliser()?.contains(prenomN) == true)
                     &&
                     (dateN == null
                             || e.dateDeNaissance?.replace("\\", "/")?.trim() == dateN)
