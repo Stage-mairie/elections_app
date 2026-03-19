@@ -36,23 +36,6 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 
-class ResultsActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        // Récupération des données
-        val nom = intent.getStringExtra("EXTRA_NOM")
-        val prenom = intent.getStringExtra("EXTRA_PRENOM")
-        val dateNaissance = intent.getStringExtra("EXTRA_DATE_NAISSANCE")
-
-        // Test Recupération de données
-        Log.d("Recup", "Nom: $nom, Prénom: $prenom, Date: $dateNaissance")
-        setContent {
-            SecondScreen()
-        }
-    }
-}
-
 @Serializable
 data class Electeurs(
     @SerialName("nom de naissance")
@@ -84,57 +67,102 @@ fun chargerElecteurs(context: Context): List<Electeurs> {
         json.decodeFromString<List<Electeurs>>(jsonString)
     } catch (e: Exception) {
         Log.e("JSON", "Erreur de chargement JSON : ${e.message}")
-        e.printStackTrace()
         emptyList()
     }
 }
 
-fun searchElecteur(
-    electeurs: List<Electeurs>,
-    nom: String?,
-    prenom: String?,
-    dateNaissance: String?
-): List<Electeurs> {
-    if (nom.isNullOrBlank() && prenom.isNullOrBlank() && dateNaissance.isNullOrBlank()) {
-        Log.d("Search", "Tous les champs sont vides")
-        return emptyList()
+class ElecteurSearchIndex(electeurs: List<Electeurs>) {
+
+    // Index par nom (nom de naissance + nom d'usage)
+    private val parNom: Map<String, List<Electeurs>> = buildMap {
+        electeurs.forEach { e ->
+            val cle1 = e.nomDeNaissance.trim().lowercase()
+            getOrPut(cle1) { mutableListOf() }.also {
+                (it as MutableList).add(e)
+            }
+            val cle2 = e.nomUsage?.trim()?.lowercase()
+            if (cle2 != null && cle2 != cle1) {
+                getOrPut(cle2) { mutableListOf() }.also {
+                    (it as MutableList).add(e)
+                }
+            }
+        }
     }
 
-    return electeurs.filter { e ->
-        val matchNom = if (!nom.isNullOrBlank()) {
-            e.nomDeNaissance.equals(nom, ignoreCase = true) ||
-                    (e.nomUsage?.equals(nom, ignoreCase = true) ?: false)
-        } else true
+    // Index par date de naissance
+    private val parDate: Map<String, List<Electeurs>> = electeurs
+        .groupBy { e ->
+            e.dateDeNaissance?.replace("\\", "/")?.trim() ?: ""
+        }
+        .filterKeys { it.isNotBlank() }
 
-        val matchPrenom = if (!prenom.isNullOrBlank()) {
-            e.prenoms?.contains(prenom, ignoreCase = true) ?: false
-        } else true
+    fun search(
+        nom: String?,
+        prenom: String?,
+        dateNaissance: String?
+    ): List<Electeurs> {
 
-        val matchDate = if (!dateNaissance.isNullOrBlank()) {
-            e.dateDeNaissance?.replace("\\", "/")
-                ?.equals(dateNaissance.replace("\\", "/"), ignoreCase = true) ?: false
-        } else true
+        // Normaliser une seule fois
+        val nomN    = nom?.trim()?.lowercase()?.takeIf { it.isNotBlank() }
+        val prenomN = prenom?.trim()?.lowercase()?.takeIf { it.isNotBlank() }
+        val dateN   = dateNaissance?.replace("\\", "/")?.trim()?.takeIf { it.isNotBlank() }
 
-        Log.d("Search", "Test: ${e.nomDeNaissance} / ${e.nomUsage} / ${e.prenoms} ${e.dateDeNaissance} → " +
-                "nom=$matchNom prenom=$matchPrenom date=$matchDate")
+        if (nomN == null && prenomN == null && dateN == null) return emptyList()
 
-        matchNom && matchPrenom && matchDate
+        // Choisir le bon index selon les champs remplis
+        val candidates: List<Electeurs> = when {
+            nomN != null -> parNom[nomN].orEmpty()  // index par nom → rapide
+            dateN != null -> parDate[dateN].orEmpty() // index par date → rapide
+            else -> emptyList() // prénom seul → cas rare, on retourne vide
+            // Si tu veux supporter prénom seul, remplace par :
+            // else -> parNom.values.flatten()
+        }
+
+        // Filtrer les candidats avec les critères restants
+        return candidates.filter { e ->
+            (nomN == null
+                    || e.nomDeNaissance.trim().lowercase() == nomN
+                    || e.nomUsage?.trim()?.lowercase() == nomN)
+                    &&
+                    (prenomN == null
+                            || e.prenoms?.lowercase()?.contains(prenomN) == true)
+                    &&
+                    (dateN == null
+                            || e.dateDeNaissance?.replace("\\", "/")?.trim() == dateN)
+        }
+    }
+}
+
+class ResultsActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        // Récupération des données
+        val nom = intent.getStringExtra("EXTRA_NOM")
+        val prenom = intent.getStringExtra("EXTRA_PRENOM")
+        val dateNaissance = intent.getStringExtra("EXTRA_DATE_NAISSANCE")
+
+        setContent {
+            SecondScreen(nom, prenom, dateNaissance)
+        }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SecondScreen() {
+fun SecondScreen(
+    nom: String?,
+    prenom: String?,
+    dateNaissance: String?
+) {
     val context = LocalContext.current
     val activity = context as ComponentActivity
 
-    // Récupération des infos passées depuis l'intent
-    val nom = activity.intent.getStringExtra("EXTRA_NOM")
-    val prenom = activity.intent.getStringExtra("EXTRA_PRENOM")
-    val dateNaissance = activity.intent.getStringExtra("EXTRA_DATE_NAISSANCE")
-
-    val electeurs by produceState<List<Electeurs>?>(initialValue = null, key1 = Unit) {
-        value = withContext(Dispatchers.IO) { chargerElecteurs(context) }
+    // Chargement JSON + construction de l'index en une seule fois
+    val index by produceState<ElecteurSearchIndex?>(initialValue = null) {
+        value = withContext(Dispatchers.IO) {
+            val electeurs = chargerElecteurs(context)
+            ElecteurSearchIndex(electeurs) // index construit une fois ici
+        }
     }
 
     Scaffold(
@@ -161,7 +189,8 @@ fun SecondScreen() {
         containerColor = Color.White
     ) { paddingValues ->
         when {
-            electeurs == null -> {
+            // JSON encore en cours de chargement
+            index == null -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -173,7 +202,8 @@ fun SecondScreen() {
             }
 
             else -> {
-                val resultats = searchElecteur(electeurs!!, nom, prenom, dateNaissance)
+                // Index prêt → recherche instantanée
+                val resultats = index!!.search(nom, prenom, dateNaissance)
 
                 if (resultats.isEmpty()) {
                     Box(
