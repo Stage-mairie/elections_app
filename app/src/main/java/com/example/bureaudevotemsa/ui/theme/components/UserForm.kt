@@ -1,6 +1,11 @@
 package com.example.bureaudevotemsa.ui.theme.components
 
 import android.R.attr.title
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
 import android.app.DatePickerDialog
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.clickable
@@ -33,6 +38,8 @@ fun UserForm(
 
     var showHint by remember { mutableStateOf(false) }
 
+    val focusManager = LocalFocusManager.current
+
     val context = LocalContext.current
 
     // Vrai si au moins un des 3 champs est non vide, faux sinon
@@ -64,6 +71,11 @@ fun UserForm(
                 value = nom,
                 onValueChange = { nom = it },
                 label = { Text("Nom") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                keyboardActions = KeyboardActions(
+                    onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                ),
                 modifier = Modifier
                     .fillMaxWidth(0.5f)
                     .padding(vertical = 4.dp)
@@ -73,6 +85,11 @@ fun UserForm(
                 value = prenom,
                 onValueChange = { prenom = it },
                 label = { Text("Prénom") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(
+                    onDone = { focusManager.clearFocus() }
+                ),
                 modifier = Modifier
                     .fillMaxWidth(0.5f)
                     .padding(vertical = 4.dp)
