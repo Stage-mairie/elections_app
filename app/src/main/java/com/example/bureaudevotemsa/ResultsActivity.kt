@@ -35,106 +35,38 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import java.text.Normalizer
+
+
+
 
 class ResultsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         // Récupération des données
         val nom = intent.getStringExtra("EXTRA_NOM")
         val prenom = intent.getStringExtra("EXTRA_PRENOM")
         val dateNaissance = intent.getStringExtra("EXTRA_DATE_NAISSANCE")
 
-        // Test Recupération de données
-        Log.d("Recup", "Nom: $nom, Prénom: $prenom, Date: $dateNaissance")
         setContent {
-            SecondScreen()
+            SecondScreen(nom, prenom, dateNaissance)
         }
-    }
-}
-
-@Serializable
-data class Electeurs(
-    @SerialName("nom de naissance")
-    val nomDeNaissance: String,
-    @SerialName("nom d'usage")
-    val nomUsage: String? = null,
-    @SerialName("prénoms")
-    val prenoms: String? = null,
-    @SerialName("date de naissance")
-    val dateDeNaissance: String? = null,
-    @SerialName("code du bureau de vote")
-    val codeBureauVote: Int,
-    @SerialName("libellé du bureau de vote")
-    val libelleBureauVote: String
-)
-
-fun chargerElecteurs(context: Context): List<Electeurs> {
-    return try {
-        val jsonString = context.assets.open("electeurs.json")
-            .bufferedReader()
-            .use { it.readText() }
-
-        val json = Json {
-            ignoreUnknownKeys = true
-            coerceInputValues = true
-            isLenient = true
-        }
-
-        json.decodeFromString<List<Electeurs>>(jsonString)
-    } catch (e: Exception) {
-        Log.e("JSON", "Erreur de chargement JSON : ${e.message}")
-        e.printStackTrace()
-        emptyList()
-    }
-}
-
-fun searchElecteur(
-    electeurs: List<Electeurs>,
-    nom: String?,
-    prenom: String?,
-    dateNaissance: String?
-): List<Electeurs> {
-    if (nom.isNullOrBlank() && prenom.isNullOrBlank() && dateNaissance.isNullOrBlank()) {
-        Log.d("Search", "Tous les champs sont vides")
-        return emptyList()
-    }
-
-    return electeurs.filter { e ->
-        val matchNom = if (!nom.isNullOrBlank()) {
-            e.nomDeNaissance.equals(nom, ignoreCase = true) ||
-                    (e.nomUsage?.equals(nom, ignoreCase = true) ?: false)
-        } else true
-
-        val matchPrenom = if (!prenom.isNullOrBlank()) {
-            e.prenoms?.contains(prenom, ignoreCase = true) ?: false
-        } else true
-
-        val matchDate = if (!dateNaissance.isNullOrBlank()) {
-            e.dateDeNaissance?.replace("\\", "/")
-                ?.equals(dateNaissance.replace("\\", "/"), ignoreCase = true) ?: false
-        } else true
-
-        Log.d("Search", "Test: ${e.nomDeNaissance} / ${e.nomUsage} / ${e.prenoms} ${e.dateDeNaissance} → " +
-                "nom=$matchNom prenom=$matchPrenom date=$matchDate")
-
-        matchNom && matchPrenom && matchDate
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SecondScreen() {
+fun SecondScreen(
+    nom: String?,
+    prenom: String?,
+    dateNaissance: String?
+) {
     val context = LocalContext.current
     val activity = context as ComponentActivity
 
-    // Récupération des infos passées depuis l'intent
-    val nom = activity.intent.getStringExtra("EXTRA_NOM")
-    val prenom = activity.intent.getStringExtra("EXTRA_PRENOM")
-    val dateNaissance = activity.intent.getStringExtra("EXTRA_DATE_NAISSANCE")
-
-    val electeurs by produceState<List<Electeurs>?>(initialValue = null, key1 = Unit) {
-        value = withContext(Dispatchers.IO) { chargerElecteurs(context) }
+    // Index déjà prêt en mémoire → recherche instantanée
+    val resultats = remember(nom, prenom, dateNaissance) {
+        ElecteurRepository.search(nom, prenom, dateNaissance)
     }
 
     Scaffold(
@@ -160,42 +92,25 @@ fun SecondScreen() {
         },
         containerColor = Color.White
     ) { paddingValues ->
-        when {
-            electeurs == null -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(color = Color(0xFF35A5C0))
-                }
+        if (resultats.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("Aucun électeur trouvé.", color = Color.Gray)
             }
-
-            else -> {
-                val resultats = searchElecteur(electeurs!!, nom, prenom, dateNaissance)
-
-                if (resultats.isEmpty()) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(paddingValues),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("Aucun électeur trouvé.", color = Color.Gray)
-                    }
-                } else {
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(paddingValues),
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
-                        contentPadding = PaddingValues(16.dp)
-                    ) {
-                        itemsIndexed(resultats) { index, e ->
-                            ElecteurCard(e, index)
-                        }
-                    }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(16.dp)
+            ) {
+                itemsIndexed(resultats) { index, e ->
+                    ElecteurCard(e, index)
                 }
             }
         }
@@ -205,23 +120,14 @@ fun SecondScreen() {
 @Composable
 fun ElecteurCard(e: Electeurs, index: Int) {
     val colors = listOf(
-        Color(0xFFE53935),
-        Color(0xFFD81B60),
-        Color(0xFF8E24AA),
-        Color(0xFF5E35B1),
-        Color(0xFF3949AB),
-        Color(0xFF1E88E5),
-        Color(0xFF00897B),
-        Color(0xFF43A047),
-        Color(0xFFF4511E),
-        Color(0xFFFB8C00),
-        Color(0xFFFDD835),
-        Color(0xFF00ACC1),
+        Color(0xFFE53935), Color(0xFFD81B60), Color(0xFF8E24AA),
+        Color(0xFF5E35B1), Color(0xFF3949AB), Color(0xFF1E88E5),
+        Color(0xFF00897B), Color(0xFF43A047), Color(0xFFF4511E),
+        Color(0xFFFB8C00), Color(0xFFFDD835), Color(0xFF00ACC1),
         Color(0xFF7CB342)
     )
 
     val chipColor = remember { colors.random() }
-
     val backgroundColor = if (index % 2 == 0) Color(231, 235, 224) else Color.White
 
     Card(

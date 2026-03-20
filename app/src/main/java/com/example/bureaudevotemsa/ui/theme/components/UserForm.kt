@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.bureaudevotemsa.ElecteurRepository
 import com.example.bureaudevotemsa.ui.theme.BureauDeVoteMSATheme
 import java.util.*
 
@@ -42,8 +43,10 @@ fun UserForm(
 
     val context = LocalContext.current
 
-    // Vrai si au moins un des 3 champs est non vide, faux sinon
-    val isSearchEnabled = nom.isNotBlank() || prenom.isNotBlank() || dateNaissance.isNotBlank()
+    val estPret by ElecteurRepository.estPret.collectAsState()
+
+    // Bouton actif seulement si l'index est prêt ET au moins un champ rempli
+    val isSearchEnabled = estPret && (nom.isNotBlank() || prenom.isNotBlank() || dateNaissance.isNotBlank())
 
     Box(
         modifier = Modifier
@@ -59,19 +62,43 @@ fun UserForm(
 
             // Titre de l'application
             Text(
-                text = "Bureau de Vote MSA",      // ton titre
-                style = MaterialTheme.typography.headlineMedium, // ou headlineSmall, titleLarge...
+                text = "Bureau de Vote MSA",
+                style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
+
+            // Bandeau de chargement — visible uniquement pendant l'initialisation
+            if (!estPret) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth(0.5f)
+                        .padding(bottom = 12.dp)
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .size(16.dp)
+                            .padding(end = 4.dp),
+                        strokeWidth = 2.dp
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Chargement de la liste des électeurs...",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
 
 
             // Champ Nom
             OutlinedTextField(
                 value = nom,
-                onValueChange = { nom = it },
+                onValueChange = { if (estPret) nom = it },
                 label = { Text("Nom") },
                 singleLine = true,
+                enabled = estPret,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                 keyboardActions = KeyboardActions(
                     onNext = { focusManager.moveFocus(FocusDirection.Down) }
@@ -83,9 +110,10 @@ fun UserForm(
             // Champ Prénom
             OutlinedTextField(
                 value = prenom,
-                onValueChange = { prenom = it },
+                onValueChange = { if (estPret) prenom = it },
                 label = { Text("Prénom") },
                 singleLine = true,
+                enabled = estPret,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(
                     onDone = { focusManager.clearFocus() }
@@ -106,6 +134,7 @@ fun UserForm(
                     value = dateNaissance,
                     onValueChange = { },
                     label = { Text("Date de naissance") },
+                    enabled = estPret,
                     readOnly = true,
                     modifier = Modifier.fillMaxWidth(),
                     placeholder = { Text("JJ/MM/AAAA") },
