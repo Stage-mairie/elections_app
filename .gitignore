@@ -26,4 +26,3 @@ app/src/main/res/values/colors.xml
 build.gradle.kts
 gradle.properties
 settings.gradle.kts
-app/release/
