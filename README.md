@@ -11,26 +11,26 @@ Android application that helps a voter find their polling station using their su
 1. Ouvrez l'application **Bureau de Vote MSA**.
 2. Saisissez au moins un critere : nom, prenom ou date de naissance.
 3. La date est facultative : saisissez simplement une annee `AAAA` ou une date complete `JJ/MM/AAAA` au clavier.
-4. Appuyez sur **Rechercher**.
-5. Consultez le code mis en avant et le libelle de votre bureau de vote dans les resultats.
-6. Utilisez la fleche retour pour modifier les criteres.
+4. Les résultats s’actualisent automatiquement sous les champs au fil de la saisie.
+5. Vérifiez l’identité, puis consultez le numéro et le libellé du bureau de vote.
+6. Si plus de 50 personnes correspondent, affinez avec le prénom ou la date de naissance. La liste est limitée aux 50 premiers résultats pour garder une saisie fluide.
 
 Le nom correspond au **debut** du nom de naissance ou du nom d'usage (ex. `BAN` retrouve `BANA`). Le prenom accepte une correspondance partielle. Les recherches ignorent les majuscules, les accents et les differences de tirets/apostrophes. La saisie d'une **annee seule** filtre sur l'annee de naissance ; les criteres renseignes se combinent (ET).
 
-Le bouton **Effacer les champs** vide le formulaire. Si aucun electeur ne correspond, l'application affiche **Aucun electeur trouve**.
+Le bouton **Effacer la recherche** vide le formulaire. Si aucun electeur ne correspond, l'application affiche **Aucun electeur trouve**.
 
 ### English
 
 1. Open the **Bureau de Vote MSA** app.
 2. Enter at least one criterion: surname, first name, or date of birth.
 3. Birth date is optional: type a year `YYYY` or a full date `DD/MM/YYYY` directly.
-4. Tap **Rechercher** (Search).
-5. Read the prominently displayed polling-station code and name in the results.
-6. Use the back arrow to adjust your search.
+4. Matching voters appear automatically under the fields as you type.
+5. Verify the voter’s identity and read the polling station number and name.
+6. When there are more than 50 matches, narrow the search with a first name or birth date. Only the first 50 matches are shown to keep typing responsive.
 
 Surname searches match the **beginning** of either birth or usual surname (e.g. `BAN` matches `BANA`). Given names support partial matches. Names are case- and accent-insensitive and normalize hyphens/apostrophes. A year-only input filters by birth year, and provided criteria are combined (AND).
 
-Use **Effacer les champs** (Clear fields) to clear the form. If no voter matches, the app displays **Aucun electeur trouve** (No voter found).
+Use **Effacer la recherche** (Clear search) to reset all fields. If no voter matches, the app displays **Aucun electeur trouve** (No voter found).
 
 ## Pour les developpeurs / For developers
 
@@ -91,10 +91,11 @@ Le fichier Excel doit contenir les colonnes suivantes : `nom de naissance`, `nom
 
 #### Organisation du code
 
-- `MainActivity.kt` affiche le formulaire et transmet les criteres de recherche.
+- `MainActivity.kt` affiche le formulaire principal.
 - `ui/theme/Color.kt` et `ui/theme/Theme.kt` definissent les couleurs et le theme visuel.
-- `ui/theme/components/UserForm.kt` contient le formulaire, la saisie directe et la remise a zero.
-- `ResultsActivity.kt` charge le JSON, filtre les electeurs et affiche les bureaux de vote.
+- `ui/theme/components/UserForm.kt` contient la recherche instantanée et les résultats intégrés, avec une disposition adaptée aux tablettes.
+- `ResultsActivity.kt` fournit le modèle électeur, le chargement JSON, la recherche classique et les cartes de résultat.
+- `FastElecteurSearch.kt` prépare un index de noms normalisés en arrière-plan pour accélérer la recherche instantanée.
 - `app/src/main/assets/electeurs.json` contient la liste embarquee dans l'application.
 - `scripts/create_json.py` transforme le fichier Excel en JSON compatible avec l'application.
 
@@ -155,9 +156,9 @@ The Excel file must contain these columns: `nom de naissance`, `nom d'usage`, `p
 
 #### Code structure
 
-- `MainActivity.kt` displays the form and passes the search criteria.
-- `ui/theme/components/UserForm.kt` contains the form, direct birth-date entry, and clear action.
-- `ResultsActivity.kt` loads the JSON, filters voters, and displays polling stations.
+- `MainActivity.kt` displays the main search screen.
+- `ui/theme/components/UserForm.kt` displays instant search results and adjusts its layout for tablets.
+- `ResultsActivity.kt` provides the voter model, JSON loading, filtering and result cards.
 - `app/src/main/assets/electeurs.json` contains the dataset bundled with the app.
 - `scripts/create_json.py` converts the Excel source file into the JSON format expected by the app.
 
